@@ -1,0 +1,26 @@
+Data Quality Profile Summary (October 2025)
+Dataset: Annual Temperature Anomalies (1900s - Present)
+
+1. Missing Data (Null/Empty Values)[cite: 54]:
+   - Column: 'temperature_anomaly'
+     - Total missing records: 4,512 (approx. 8.5% of dataset)
+     - Issue: Missing data is clustered, particularly for early decades (pre-1930) and for under-reported regions[cite: 56, 74].
+   - Column: 'country_code'
+     - Total missing records: 15 (Manual check required to fill with standard 3-letter code).
+
+2. Inconsistent Formats[cite: 57]:
+   - Column: 'temperature_anomaly'
+     - Units: Confirmed all values are in Degrees Celsius (based on source documentation).
+     - Baseline: Confirmed baseline is 1951-1980.
+     - Issue: Need to verify if negative values (for cooler years) are consistently represented across all sources[cite: 60].
+
+3. Duplicate Records[cite: 61]:
+   - Key: (country, year)
+     - Total duplicate records identified: 87
+     - Issue: Repeated records for the same region and year need cleaning and deduplication[cite: 63, 76].
+
+4. Outliers/Incorrect Data[cite: 64]:
+   - Column: 'temperature_anomaly'
+     - Max value: 9.998000 (Implausible outlier for 1942, needs flagging/correction)[cite: 67, 77].
+     - Min value: -3.500000 (Likely implausible, significantly lower than global trend)[cite: 67].
+     - Issue: Outliers need to be identified using statistical methods (e.g., Z-score or IQR) in Python[cite: 83].
