@@ -1,0 +1,2 @@
+rows_input,rows_after_initial_clean,unique_countries,years_min,years_max,duplicates_removed,missing_country,missing_country_code_or_invalid,missing_year,missing_temperature_anomaly
+16593,16490,193,1940,2024,103,0,85,0,0

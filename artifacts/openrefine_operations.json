@@ -1,0 +1,98 @@
+[
+  {
+    "op": "core/text-transform",
+    "engineConfig": {
+      "facets": [],
+      "mode": "row-based"
+    },
+    "columnName": "Code",
+    "expression": "grel:value.trim().toUppercase().replace(/[^A-Z]/, \"\")",
+    "onError": "keep-original",
+    "repeat": false,
+    "repeatCount": 10,
+    "description": "Transforma el texto de las celdas en la columna Code usando la expresión grel:value.trim().toUppercase().replace(/[^A-Z]/, \"\")"
+  },
+  {
+    "op": "core/text-transform",
+    "engineConfig": {
+      "facets": [],
+      "mode": "row-based"
+    },
+    "columnName": "Year",
+    "expression": "value.toNumber()",
+    "onError": "keep-original",
+    "repeat": false,
+    "repeatCount": 10,
+    "description": "Transforma el texto de las celdas en la columna Year usando la expresión value.toNumber()"
+  },
+  {
+    "op": "core/text-transform",
+    "engineConfig": {
+      "facets": [],
+      "mode": "row-based"
+    },
+    "columnName": "Temperature anomaly",
+    "expression": "value.toNumber()",
+    "onError": "keep-original",
+    "repeat": false,
+    "repeatCount": 10,
+    "description": "Transforma el texto de las celdas en la columna Temperature anomaly usando la expresión value.toNumber()"
+  },
+  {
+    "op": "core/column-addition",
+    "engineConfig": {
+      "facets": [],
+      "mode": "row-based"
+    },
+    "baseColumnName": "Code",
+    "expression": "grel:cells[\"Code\"].value + \"-\" + cells[\"Year\"].value.toString()",
+    "onError": "set-to-blank",
+    "newColumnName": "key_code_year",
+    "columnInsertIndex": 2,
+    "description": "Crear la columna key_code_year en el índice 2 basada en la columna Code usando la expresión grel:cells[\"Code\"].value + \"-\" + cells[\"Year\"].value.toString()"
+  },
+  {
+    "op": "core/row-duplicate-removal",
+    "engineConfig": {
+      "facets": [
+        {
+          "type": "list",
+          "name": "key_code_year",
+          "expression": "facetCount(value, 'value', 'key_code_year') > 1",
+          "columnName": "key_code_year",
+          "invert": false,
+          "omitBlank": false,
+          "omitError": false,
+          "selection": [
+            {
+              "v": {
+                "v": true,
+                "l": "true"
+              }
+            }
+          ],
+          "selectBlank": false,
+          "selectError": false
+        }
+      ],
+      "mode": "row-based"
+    },
+    "criteria": [
+      "Entity"
+    ],
+    "description": "Remove duplicate rows"
+  },
+  {
+    "op": "core/column-addition",
+    "engineConfig": {
+      "facets": [],
+      "mode": "row-based"
+    },
+    "baseColumnName": "Temperature anomaly",
+    "expression": "grel:if(isBlank(value), \"no\", if(abs(value) > 5, \"yes\", \"no\"))",
+    "onError": "set-to-blank",
+    "newColumnName": "outlier_flag",
+    "columnInsertIndex": 5,
+    "description": "Crear la columna outlier_flag en el índice 5 basada en la columna Temperature anomaly usando la expresión grel:if(isBlank(value), \"no\", if(abs(value) > 5, \"yes\", \"no\"))"
+  }
+]
