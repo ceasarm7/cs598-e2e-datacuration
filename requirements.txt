@@ -1,0 +1,22 @@
+# Python Dependencies for CS598 Data Curation Project
+# Temperature Anomalies Cleaning Workflow
+# 
+# Project: End-to-End Data Curation Workflow for Climate Change Impact Data
+# Team 11 - CS598 Data Cleaning
+#
+# Installation:
+#   pip install -r requirements.txt
+#
+# Usage:
+#   python artifacts/initial_cleaning_script.py
+
+# Core data processing library
+# Version 2.0+ required for nullable integer types (Int64) and improved string handling
+pandas>=2.0.0,<3.0.0
+
+# Standard library dependencies (no installation needed):
+# - pathlib (Python 3.4+)
+# - typing (Python 3.5+)
+
+# Python version requirement: 3.8+ recommended
+

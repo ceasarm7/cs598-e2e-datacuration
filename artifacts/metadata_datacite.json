@@ -1,0 +1,148 @@
+{
+  "schemaVersion": "http://datacite.org/schema/kernel-4",
+  "doi": "10.XXXX/example",
+  "creators": [
+    {
+      "name": "Mancillas, Cesar",
+      "nameType": "Personal",
+      "givenName": "Cesar",
+      "familyName": "Mancillas",
+      "affiliation": [
+        {
+          "name": "University of Illinois Urbana-Champaign"
+        }
+      ]
+    },
+    {
+      "name": "Cruz, Aristofanes",
+      "nameType": "Personal",
+      "givenName": "Aristofanes",
+      "familyName": "Cruz",
+      "affiliation": [
+        {
+          "name": "University of Illinois Urbana-Champaign"
+        }
+      ]
+    },
+    {
+      "name": "Nava, Cesar",
+      "nameType": "Personal",
+      "givenName": "Cesar",
+      "familyName": "Nava",
+      "affiliation": [
+        {
+          "name": "University of Illinois Urbana-Champaign"
+        }
+      ]
+    }
+  ],
+  "titles": [
+    {
+      "title": "Annual Temperature Anomalies Dataset - Cleaned and Curated",
+      "titleType": "MainTitle"
+    },
+    {
+      "title": "Climate Change Impact Data: Global Temperature Anomalies (1880-2023)",
+      "titleType": "Subtitle"
+    }
+  ],
+  "publisher": "University of Illinois Urbana-Champaign, CS598 Data Cleaning Course",
+  "publicationYear": "2025",
+  "resourceType": {
+    "resourceType": "Dataset",
+    "resourceTypeGeneral": "Dataset"
+  },
+  "subjects": [
+    {
+      "subject": "Climate Change",
+      "subjectScheme": "LCSH"
+    },
+    {
+      "subject": "Temperature Anomalies",
+      "subjectScheme": "LCSH"
+    },
+    {
+      "subject": "Environmental Data",
+      "subjectScheme": "LCSH"
+    },
+    {
+      "subject": "Global Temperature Trends",
+      "subjectScheme": "LCSH"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Our World in Data",
+      "nameType": "Organizational",
+      "contributorType": "DataCollector"
+    }
+  ],
+  "dates": [
+    {
+      "date": "2025",
+      "dateType": "Created"
+    },
+    {
+      "date": "2025",
+      "dateType": "Updated"
+    }
+  ],
+  "language": "en",
+  "descriptions": [
+    {
+      "description": "This dataset contains cleaned and curated annual temperature anomalies from 1880 to 2023 for approximately 190 countries worldwide. Temperature anomalies represent deviations from a baseline reference period (1951-1980) measured in degrees Celsius. The dataset has been processed through an end-to-end data curation workflow including quality assessment, cleaning, deduplication, and standardization. The primary use case is to analyze long-term regional and global temperature trends to understand the impact of climate change.",
+      "descriptionType": "Abstract"
+    },
+    {
+      "description": "Data curation workflow: 1) Data acquisition from Our World in Data, 2) Quality assessment identifying missing data, duplicates, and outliers, 3) Cleaning using OpenRefine and Python/Pandas pipelines, 4) Documentation and reproducibility artifacts. The dataset is suitable for climate change research, trend analysis, and regional comparisons.",
+      "descriptionType": "Methods"
+    }
+  ],
+  "formats": [
+    "CSV",
+    "SQL"
+  ],
+  "sizes": [
+    "~53,000 records",
+    "~190 countries",
+    "144 years (1880-2023)"
+  ],
+  "rightsList": [
+    {
+      "rights": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+      "rightsURI": "https://creativecommons.org/licenses/by/4.0/",
+      "rightsIdentifier": "cc-by-4.0"
+    }
+  ],
+  "relatedIdentifiers": [
+    {
+      "relatedIdentifier": "https://ourworldindata.org/climate-change",
+      "relatedIdentifierType": "URL",
+      "relationType": "IsDerivedFrom"
+    },
+    {
+      "relatedIdentifier": "https://github.com/ceasarm7/cs598-e2e-datacuration",
+      "relatedIdentifierType": "URL",
+      "relationType": "IsDocumentedBy"
+    }
+  ],
+  "version": "1.0.0",
+  "geoLocations": [
+    {
+      "geoLocationPlace": "Global",
+      "geoLocationBox": {
+        "westBoundLongitude": -180,
+        "eastBoundLongitude": 180,
+        "southBoundLatitude": -90,
+        "northBoundLatitude": 90
+      }
+    }
+  ],
+  "fundingReferences": [
+    {
+      "funderName": "University of Illinois Urbana-Champaign",
+      "awardNumber": "CS598 Data Cleaning Course"
+    }
+  ]
+}
+

@@ -1,0 +1,572 @@
+# End-to-End Data Curation Workflow for Climate Change Impact Data
+
+## Final Project Report
+
+**Team 11 — CS598 Data Cleaning**  
+**University of Illinois Urbana-Champaign**  
+**October 2025**
+
+**Team Members:**
+- Cesar Mancillas (UIN: 651066529, cam37@illinois.edu)
+- Aristofanes Cruz (UIN: 655558479, ac163@illinois.edu)
+- Cesar Nava (UIN: 654326785, can14@illinois.edu)
+
+**Repository:** https://github.com/ceasarm7/cs598-e2e-datacuration
+
+---
+
+## Abstract
+
+This project develops and documents an end-to-end data curation workflow for climate change impact data, focusing on the Annual Temperature Anomalies dataset from Our World in Data (OWID). The workflow demonstrates systematic approaches to data acquisition, quality assessment, cleaning, transformation, and documentation, resulting in a reproducible, well-documented dataset suitable for climate change research. Through the application of established data lifecycle models, standards, and best practices, we transform raw climate data into a quality-assured resource that supports long-term regional and global temperature trend analysis. All artifacts, including scripts, documentation, and cleaned datasets, are available in our GitHub repository.
+
+---
+
+## 1. Introduction: Project Motivation and Context
+
+### 1.1 Motivation
+
+Climate change represents one of the most pressing challenges of our time, requiring robust data-driven analysis to understand long-term trends and regional variations. However, raw climate data often contains quality issues that can compromise research validity, including missing values, inconsistencies, duplicates, and outliers. This project addresses these challenges by developing a comprehensive data curation workflow that transforms raw climate data into a reliable, well-documented resource for scientific analysis.
+
+### 1.2 Use Case and Research Question
+
+Our primary use case (**U1**) guides all curation activities:
+
+> "Analyze long-term regional and global temperature trends to understand the impact of climate change."
+
+This use case requires:
+- **Temporal coverage:** Historical data spanning multiple decades (1880-2023)
+- **Spatial coverage:** Global representation across approximately 190 countries
+- **Data quality:** Clean, standardized, and validated measurements
+- **Reproducibility:** Transparent workflow enabling verification and extension
+
+The research question we support is: *How have global and regional temperature anomalies changed over time, and what patterns emerge when comparing different countries and regions?*
+
+### 1.3 Project Scope
+
+This project focuses on the Annual Temperature Anomalies dataset, which measures deviations from a baseline reference period (1951-1980) in degrees Celsius. The curation workflow encompasses four main phases: (1) data acquisition and modeling, (2) quality assessment, (3) cleaning and transformation, and (4) documentation and reproducibility. All work is conducted with transparency, reproducibility, and reuse in mind, following established data stewardship principles.
+
+---
+
+## 2. Dataset Profile
+
+### 2.1 Source and License
+
+The dataset originates from **Our World in Data (OWID)**, a research organization providing open-access data on global challenges. The specific dataset, "Annual Temperature Anomalies," is available under a **Creative Commons Attribution 4.0 International (CC BY 4.0)** license, which permits sharing and adaptation with proper attribution (Our World in Data, n.d.).
+
+**Source URL:** https://ourworldindata.org/climate-change
+
+### 2.2 Data Structure
+
+The dataset follows a relational model with a single primary table, `TemperatureAnomalies`, containing four columns:
+
+- **`country`** (VARCHAR(100)): Full name of the country or geographical region
+- **`country_code`** (VARCHAR(3)): ISO 3166-1 alpha-3 (ISO-3) three-letter country code
+- **`year`** (INT): Calendar year for the temperature record (range: 1880-2023)
+- **`temperature_anomaly`** (DECIMAL(7,6)): Annual deviation from baseline in degrees Celsius
+
+The composite primary key `(country_code, year)` ensures uniqueness of country-year pairs. The complete schema definition is available in `artifacts/schema_definition.sql`.
+
+### 2.3 Data Extent
+
+- **Spatial Coverage:** Global, encompassing approximately 190 countries and regions
+- **Temporal Coverage:** 1880-2023 (144 years)
+- **Total Records:** Approximately 53,000 records (after cleaning)
+- **Geographic Scope:** Worldwide, with some regional aggregates (e.g., "World")
+
+### 2.4 Data Characteristics
+
+Temperature anomalies represent deviations from the 1951-1980 baseline period, measured in degrees Celsius. Positive values indicate warmer-than-baseline conditions, while negative values indicate cooler conditions. The dataset includes both country-specific and aggregate regional measurements, enabling both national and global trend analysis.
+
+---
+
+## 3. Data Curation Workflow
+
+Our data curation workflow follows a systematic four-phase approach, with each phase producing documented artifacts that enable reproducibility and verification. The complete workflow is documented in `artifacts/provenance_workflow.md`.
+
+### 3.1 Phase 1: Data Acquisition and Modeling
+
+**Objective:** Acquire raw data and establish target schema for integration.
+
+**Activities:**
+1. Downloaded the dataset from Our World in Data website
+2. Verified data integrity and source authenticity
+3. Defined relational schema (`artifacts/schema_definition.sql`) with:
+   - Table structure: `TemperatureAnomalies`
+   - Primary key: `(country_code, year)`
+   - Data types and constraints
+
+**Artifacts:** `artifacts/schema_definition.sql`
+
+This phase establishes the foundation for all subsequent curation activities by defining the target data model and ensuring structural consistency.
+
+### 3.2 Phase 2: Quality Assessment
+
+**Objective:** Identify and document data quality issues.
+
+**Activities:**
+1. Conducted initial data profiling
+2. Identified quality issues:
+   - **Missing data:** 4,512 records (8.5%) in `temperature_anomaly`, clustered in early decades (pre-1930)
+   - **Missing country codes:** 15 records requiring manual resolution
+   - **Duplicate records:** 87 duplicate (country, year) pairs
+   - **Outliers:** Extreme temperature values (max: 9.998°C, min: -3.5°C) requiring validation
+3. Documented findings in quality profile report
+
+**Artifacts:** `quality_profile_report.txt`
+
+The quality assessment revealed systematic issues requiring targeted cleaning strategies, particularly around missing data in historical periods and country code standardization.
+
+### 3.3 Phase 3: Cleaning and Transformation
+
+We implemented a two-stage cleaning pipeline combining interactive (OpenRefine) and automated (Python) approaches.
+
+#### 3.3.1 OpenRefine Pipeline
+
+**Tool:** OpenRefine v3.9.5
+
+**Operations** (documented in `artifacts/openrefine_operations.json`):
+1. **Country code transformation:** Standardized to uppercase, removed non-alphabetic characters
+2. **Type coercion:** Converted year and temperature anomaly to numeric types
+3. **Composite key creation:** Generated `key_code_year` for deduplication
+4. **Duplicate removal:** Eliminated obvious duplicates based on country name
+5. **Outlier flagging:** Created `outlier_flag` column for values |anomaly| > 5°C
+
+**Output:** `artifacts/temperature_anomalies_refine_clean_base.csv`
+
+#### 3.3.2 Python/Pandas Pipeline
+
+**Tool:** Python 3.8+ with Pandas 2.0+
+
+**Script:** `artifacts/initial_cleaning_script.py`
+
+**Processing Steps:**
+1. **Column standardization:** Mapped source column names to standard schema
+2. **Country code normalization:** 
+   - Converted to uppercase
+   - Mapped aliases to ISO-3 (e.g., "UK" → "GBR", "US" → "USA")
+   - Validated ISO-3 format (exactly 3 uppercase letters)
+   - Set invalid codes to NULL
+3. **Type coercion:** Ensured proper data types (string, integer, decimal)
+4. **Deduplication:** Removed 87 duplicate (country_code, year) pairs, keeping first occurrence
+5. **Quality reporting:** Generated data quality metrics without data mutation
+
+**Outputs:**
+- `artifacts/temperature_anomalies_initial_clean.csv` (cleaned dataset)
+- `artifacts/temperature_anomalies_initial_dq_report.csv` (quality metrics)
+
+The two-stage approach leverages OpenRefine's interactive capabilities for exploratory cleaning and Python's automation for systematic standardization, ensuring both flexibility and reproducibility.
+
+### 3.4 Phase 4: Documentation and Reproducibility
+
+**Objective:** Create comprehensive documentation enabling reuse and verification.
+
+**Activities:**
+1. Created detailed data dictionary (`artifacts/data_dictionary.md`)
+2. Generated DataCite metadata (`artifacts/metadata_datacite.json`)
+3. Documented complete provenance chain (`artifacts/provenance_workflow.md`)
+4. Created environment specification (`requirements.txt`)
+5. Developed lifecycle analysis (`artifacts/lifecycle_analysis.md`)
+6. Documented identifier systems (`artifacts/identifier_systems.md`)
+7. Analyzed data concepts and practices (`artifacts/data_concepts_practices.md`)
+
+**Artifacts:** Complete documentation suite covering all aspects of the curation process.
+
+This phase ensures the dataset is not only cleaned but also fully documented, enabling future researchers to understand, verify, and extend our work.
+
+---
+
+## 4. Lifecycle Model Analysis
+
+Our workflow aligns with established data lifecycle models, demonstrating systematic progression through curation phases. The complete analysis is available in `artifacts/lifecycle_analysis.md`.
+
+### 4.1 DCC Curation Lifecycle Model
+
+The Digital Curation Centre (DCC) Curation Lifecycle Model provides a framework for understanding data curation stages (Digital Curation Centre, n.d.). Our workflow maps to key DCC phases:
+
+- **Create/Receive:** Data acquisition from OWID
+- **Appraise/Select:** Quality assessment and issue identification
+- **Ingest:** Schema definition and modeling
+- **Preserve:** Cleaning and transformation (OpenRefine + Python)
+- **Store:** Output generation and version control
+- **Access/Reuse:** Documentation and GitHub dissemination
+- **Transform/Describe:** Ongoing throughout workflow
+
+This alignment ensures our curation follows recognized best practices for long-term data preservation and reuse.
+
+### 4.2 OAIS Reference Model
+
+The Open Archival Information System (OAIS) model describes functional entities for digital preservation (Consultative Committee for Space Data Systems, 2012). Our workflow implements OAIS concepts:
+
+- **Ingest Function:** Receiving raw OWID data (SIP) and generating cleaned dataset (AIP)
+- **Archival Storage:** Organized `/artifacts` directory with version control
+- **Data Management:** Schema definition, metadata, and quality reports
+- **Access Function:** GitHub repository providing public access (DIP)
+- **Preservation Planning:** Standard formats (CSV, SQL) and metadata (DataCite)
+- **Administration:** License compliance (CC BY 4.0) and quality assurance
+
+The OAIS model emphasizes preservation and access, which our workflow addresses through standard formats, comprehensive metadata, and public dissemination.
+
+### 4.3 Lifecycle Continuity
+
+Our workflow demonstrates iterative refinement across lifecycle phases: initial assessment identified issues, cleaning addressed them, quality reporting validated improvements, and documentation enabled reuse. This iterative approach ensures data quality improves at each stage while maintaining transparency throughout the process.
+
+---
+
+## 5. Course Concepts Integration
+
+Our project addresses all required course concepts, demonstrating comprehensive understanding of data curation principles and practices.
+
+### 5.1 Data Lifecycle (M1)
+
+As detailed in Section 4, our workflow maps to both DCC and OAIS lifecycle models, demonstrating systematic progression from acquisition through preservation and dissemination. The lifecycle analysis document (`artifacts/lifecycle_analysis.md`) provides detailed phase-by-phase mapping and justification.
+
+### 5.2 Ethical, Legal, and Policy Constraints (M2)
+
+**License Compliance:** The source dataset (OWID) uses CC BY 4.0 license, which we maintain in all derived works. All outputs include proper attribution to Our World in Data, ensuring legal compliance and ethical data use.
+
+**Data Privacy:** The dataset contains no personal or sensitive information—only publicly available climate measurements. No privacy concerns arise.
+
+**Ethical Considerations:** The dataset supports climate change research, a critical public good. Our curation practices ensure data accuracy and transparency, supporting ethical scientific research.
+
+**Documentation:** Ethical and legal considerations are documented in `artifacts/provenance_workflow.md` (Ethical and Legal Considerations section).
+
+### 5.3 Data Models and Abstractions (M3-5)
+
+**Relational Data Model:** We employ a relational model with a single table (`TemperatureAnomalies`) and composite primary key `(country_code, year)`. The schema is defined in `artifacts/schema_definition.sql`.
+
+**Abstraction Levels:**
+- **Physical:** CSV files stored in repository
+- **Logical:** Relational schema with defined structure, types, and constraints
+- **Conceptual:** Entities (Countries, Years, Temperature Anomalies) and relationships
+
+**Justification:** The relational model provides structure, enables integration with other datasets, and supports efficient querying. The composite primary key naturally reflects the data's structure (country-year pairs).
+
+**Documentation:** Complete data model description in `artifacts/data_dictionary.md` and `artifacts/schema_definition.sql`.
+
+### 5.4 Data Integration and Cleaning (M6)
+
+**Integration Issues Identified:**
+1. **Column name heterogeneity:** Source used "Entity" and "Code" vs. our standard "country" and "country_code"
+2. **Country code inconsistencies:** Variations like "UK" vs. "GBR", "US" vs. "USA"
+3. **Type inconsistencies:** String vs. numeric types for year and temperature
+4. **Missing data:** 8.5% missing temperature values, clustered in early decades
+
+**Cleaning Processes:**
+- **OpenRefine:** Interactive normalization and type coercion
+- **Python/Pandas:** Automated standardization, alias mapping, deduplication
+- **Quality reporting:** Metrics generation without data mutation
+
+**Results:** Removed 87 duplicates, standardized all country codes to ISO-3, enforced type consistency, and documented all missing values.
+
+**Documentation:** Complete cleaning processes documented in `artifacts/provenance_workflow.md` and `artifacts/initial_cleaning_script.py`.
+
+### 5.5 Data Concepts (M7) - Basic Representation Model
+
+The Basic Representation Model (BRM) distinguishes between Information Object (conceptual), Data Object (physical), and Representation Information (metadata) (Consultative Committee for Space Data Systems, 2012).
+
+**Our Application:**
+- **Information Object:** Annual temperature anomalies for countries/regions
+- **Data Object:** CSV files with tabular structure
+- **Representation Information:** Schema, data dictionary, metadata, provenance
+
+**BRM Layers:**
+1. Physical: CSV files, file system, Git repository
+2. Logical: Relational schema, data types, constraints
+3. Conceptual: Entities and relationships
+4. Semantic: Meaning (temperature deviation from baseline)
+
+**Value-Level vs. Structure-Level:**
+- **Value-level:** Individual data points, missing values, outliers (addressed through cleaning)
+- **Structure-level:** Schema design, relationships, constraints (addressed through modeling)
+
+**Documentation:** Complete BRM analysis in `artifacts/data_concepts_practices.md`.
+
+### 5.6 Metadata and Data Documentation (M8)
+
+**DataCite Metadata:** We created comprehensive DataCite v4 metadata (`artifacts/metadata_datacite.json`) including:
+- Creators, titles, descriptions
+- Subjects, formats, sizes
+- Rights (CC BY 4.0)
+- Related identifiers (source URL, repository)
+- Geographic coverage
+
+**Data Dictionary:** Detailed codebook (`artifacts/data_dictionary.md`) providing:
+- Column descriptions with types and constraints
+- Example values and valid ranges
+- Missing value documentation
+- Data quality metrics
+- Usage notes and limitations
+
+**Justification:** DataCite is a recognized standard for research data metadata, ensuring interoperability and discoverability. The data dictionary provides essential interpretation information following BRM principles.
+
+### 5.7 Identity and Identifier Systems (M9)
+
+**Primary Identifier:** ISO 3166-1 alpha-3 (ISO-3) country codes
+
+**Justification:**
+1. **International standard:** Widely recognized and maintained by ISO
+2. **Stability:** Codes persist even when country names change
+3. **Uniqueness:** One code per country, no ambiguity
+4. **Interoperability:** Compatible with other climate datasets (World Bank, UN)
+5. **Compactness:** Three characters, efficient yet readable
+
+**Composite Primary Key:** `(country_code, year)` uniquely identifies each record
+
+**Justification:**
+- Natural key reflecting data structure
+- Enables efficient queries and joins
+- Prevents duplicate country-year pairs
+- Supports temporal analysis
+
+**Implementation:** Standardized all country codes to ISO-3 format, mapped aliases (e.g., "UK" → "GBR"), and validated format. Removed 87 duplicates based on composite key.
+
+**Documentation:** Complete identifier system analysis in `artifacts/identifier_systems.md`, including alternatives considered and justification.
+
+### 5.8 Standards and Standardization (M11)
+
+**Standards Used:**
+1. **ISO 3166-1 alpha-3:** Country code standard (justified in M9)
+2. **DataCite Schema v4:** Metadata standard (justified in M8)
+3. **SQL:** Schema definition language (standard relational model)
+4. **CSV:** Data exchange format (universal compatibility)
+
+**Justification:**
+- **ISO-3:** International recognition, interoperability with climate datasets
+- **DataCite:** Research data metadata standard, ensures discoverability
+- **SQL:** Standard schema language, enables database integration
+- **CSV:** Universal format, tool-agnostic, human-readable
+
+**Standardization Benefits:**
+- Enables integration with other datasets
+- Facilitates automated processing
+- Supports long-term preservation
+- Ensures interoperability
+
+### 5.9 Workflow Automation, Provenance, and Reproducibility (M12)
+
+**Automation:** Python script (`artifacts/initial_cleaning_script.py`) automates:
+- Column standardization
+- Country code normalization
+- Type coercion
+- Deduplication
+- Quality reporting
+
+**Provenance:** Complete lineage documented in `artifacts/provenance_workflow.md`:
+- Source data → OpenRefine → Python → Cleaned outputs
+- All transformations documented
+- Version information maintained
+
+**Reproducibility:**
+- Environment specification (`requirements.txt`)
+- Step-by-step instructions
+- All operations exported (OpenRefine JSON)
+- Version-controlled repository
+
+**Transparency:** Every transformation is documented, enabling verification and extension of our work.
+
+### 5.10 Data Practices (M13)
+
+Our project demonstrates alignment with established data practices research (Borgman, 2015):
+
+**Data Curation Practices:**
+- **Documentation:** Comprehensive metadata and data dictionary
+- **Quality Assurance:** Systematic assessment and cleaning
+- **Standardization:** ISO-3 codes, DataCite metadata
+
+**Data Stewardship Practices:**
+- **Transparency:** Complete provenance chain, open repository
+- **Preservation:** Standard formats, persistent metadata
+- **Ethical Practice:** License compliance, proper attribution
+
+**Research Data Management Practices:**
+- **Organization:** Structured directory, consistent naming
+- **Reproducibility:** Automated scripts, environment specs
+- **Collaboration:** Team workflow, version control
+
+**FAIR Principles Alignment:**
+- **Findable:** GitHub repository, DataCite metadata
+- **Accessible:** Public access, standard formats
+- **Interoperable:** Standard schemas, ISO codes
+- **Reusable:** Complete documentation, clear license
+
+**Documentation:** Complete data practices analysis in `artifacts/data_concepts_practices.md`.
+
+### 5.11 Dissemination and Communication (M15)
+
+**GitHub Repository:** https://github.com/ceasarm7/cs598-e2e-datacuration
+
+**Repository Structure:**
+- `/artifacts`: All scripts, data, and documentation
+- `README.md`: Project overview and instructions
+- `requirements.txt`: Environment specification
+- Organized, self-contained structure
+
+**Self-Contained Package:**
+- All artifacts included
+- Complete documentation
+- Reproducibility instructions
+- No external dependencies beyond standard tools
+
+**Accessibility:**
+- Public repository
+- Clear documentation
+- Usage guidelines
+- Contact information
+
+This structure ensures the project is understandable, reproducible, and reusable by future researchers.
+
+---
+
+## 6. Findings, Problems Encountered, and Lessons Learned
+
+### 6.1 Key Findings
+
+**Data Quality Issues:**
+1. **Missing Data:** 4,512 records (8.5%) missing temperature values, primarily in early decades (pre-1930) and under-reported regions. This clustering suggests historical data collection limitations rather than random missingness.
+
+2. **Duplicates:** 87 duplicate (country, year) pairs identified, likely from data integration processes or source updates. These duplicates could lead to incorrect aggregations if not addressed.
+
+3. **Outliers:** Extreme temperature values (max: 9.998°C, min: -3.5°C) flagged for review. While some may be valid (regional extremes), others may indicate measurement errors requiring domain expert validation.
+
+4. **Country Code Inconsistencies:** 15 missing codes and numerous format variations (e.g., "UK" vs. "GBR") requiring standardization for integration with other datasets.
+
+**Data Characteristics:**
+- Strong temporal coverage (1880-2023) enabling long-term trend analysis
+- Comprehensive spatial coverage (~190 countries) supporting regional comparisons
+- Consistent baseline period (1951-1980) ensuring comparability
+- Standard units (degrees Celsius) facilitating interpretation
+
+### 6.2 Problems Encountered
+
+**Technical Challenges:**
+
+1. **Column Name Heterogeneity:** Source data used different column names ("Entity", "Code") than our target schema ("country", "country_code"). Required mapping logic to handle both formats.
+
+2. **Country Code Variations:** Multiple representations of the same country (e.g., "UK", "GB", "GBR" for United Kingdom) required comprehensive alias mapping to ISO-3 standard.
+
+3. **Type Inconsistencies:** Some numeric fields stored as strings, requiring careful type coercion with error handling.
+
+4. **Missing Data Patterns:** Clustered missing data in early decades complicated imputation decisions. We chose to preserve NULLs rather than impute, maintaining transparency.
+
+**Workflow Challenges:**
+
+1. **Tool Integration:** Combining OpenRefine (interactive) and Python (automated) required careful handoff between stages, ensuring data format compatibility.
+
+2. **Reproducibility:** Initial workflow relied on manual OpenRefine operations. Exported operations JSON enables reproducibility, but full automation would require additional scripting.
+
+3. **Documentation Scope:** Balancing comprehensive documentation with practical usability required iterative refinement of documentation structure.
+
+### 6.3 Lessons Learned
+
+**Data Curation Principles:**
+
+1. **Standardization is Critical:** Using ISO-3 country codes from the start would have prevented many cleaning challenges. Standards provide stability and interoperability.
+
+2. **Documentation Enables Reuse:** Comprehensive documentation (metadata, data dictionary, provenance) is essential for data reuse. Future researchers need complete context to use data effectively.
+
+3. **Quality Assessment First:** Systematic quality assessment before cleaning informed our strategy and prevented unnecessary transformations.
+
+4. **Transparency Over Perfection:** Preserving NULLs and documenting issues is preferable to aggressive imputation that might introduce bias.
+
+5. **Automation Supports Reproducibility:** Automated Python scripts ensure consistent results and enable verification, while interactive tools (OpenRefine) support exploratory cleaning.
+
+**Technical Lessons:**
+
+1. **Two-Stage Cleaning:** Combining interactive (OpenRefine) and automated (Python) approaches leverages strengths of both: exploration and reproducibility.
+
+2. **Composite Keys:** Natural composite keys `(country_code, year)` reflect data structure and enable efficient operations.
+
+3. **Version Control:** Git repository tracks changes and enables collaboration, essential for team projects.
+
+4. **Environment Specification:** `requirements.txt` ensures reproducible Python environment across systems.
+
+### 6.4 Next Steps and Future Work
+
+**Immediate Enhancements:**
+1. **Statistical Outlier Handling:** Implement z-score or IQR-based outlier detection per country, with conservative winsorization or NULL replacement for extreme values (|z| > 3).
+
+2. **Missing Value Imputation:** Apply per-country linear interpolation for missing values, with forward/backward fill for edge cases only when justified by domain knowledge.
+
+3. **Comprehensive DQ Report:** Expand quality reporting to include outlier statistics, imputation summaries, and validation metrics.
+
+**Long-Term Improvements:**
+1. **Workflow Automation:** Fully automate OpenRefine operations through scripting or alternative tools, eliminating manual steps.
+
+2. **Enhanced Metadata:** Add temporal and spatial coverage details to metadata, improving discoverability.
+
+3. **Data Integration:** Integrate with complementary datasets (e.g., GDP, population) using ISO-3 codes as join keys.
+
+4. **Validation Framework:** Develop automated validation tests ensuring data quality in future updates.
+
+5. **Versioning System:** Implement semantic versioning for dataset releases, tracking changes over time.
+
+**Research Applications:**
+- Long-term temperature trend analysis
+- Regional climate change comparisons
+- Integration with socioeconomic datasets
+- Machine learning applications for climate prediction
+
+---
+
+## 7. Conclusion
+
+This project demonstrates a comprehensive end-to-end data curation workflow for climate change impact data, transforming raw data from Our World in Data into a cleaned, standardized, and well-documented dataset suitable for scientific research. Through systematic application of data lifecycle models, established standards, and best practices, we created a reproducible workflow that addresses data quality issues while maintaining transparency and enabling future reuse.
+
+Our workflow successfully addresses all required course concepts (M1-M15), from data lifecycle mapping to dissemination strategies. The resulting dataset, documentation, and artifacts provide a foundation for climate change research while demonstrating principles of data stewardship, reproducibility, and open science.
+
+The project reveals both the challenges and opportunities in climate data curation: missing data in historical periods, inconsistencies requiring standardization, and the need for comprehensive documentation. However, systematic approaches to quality assessment, cleaning, and documentation can transform raw data into reliable research resources.
+
+All artifacts—scripts, documentation, cleaned datasets, and metadata—are available in our GitHub repository, enabling verification, extension, and reuse. This project contributes to the broader goal of making climate data more accessible, reliable, and useful for understanding and addressing climate change.
+
+---
+
+## References
+
+Ball, A. (2010). *Review of Data Management Lifecycle Models*. University of Bath. https://www.dcc.ac.uk/sites/default/files/documents/publications/reports/ball_review_lifecycle_models.pdf
+
+Borgman, C. L. (2015). *Big Data, Little Data, No Data: Scholarship in the Networked World*. MIT Press.
+
+Borgman, C. L., Scharnhorst, A., & Golshan, M. S. (2019). Digital data archives as knowledge infrastructures: Mediating data sharing and reuse. *Journal of the Association for Information Science and Technology*, 70(8), 888-904. https://doi.org/10.1002/asi.24172
+
+Consultative Committee for Space Data Systems. (2012). *Reference Model for an Open Archival Information System (OAIS)* (ISO 14721:2012). https://public.ccsds.org/pubs/650x0m2.pdf
+
+Digital Curation Centre. (n.d.). *DCC Curation Lifecycle Model*. https://www.dcc.ac.uk/guidance/curation-lifecycle-model
+
+International Organization for Standardization. (2020). *ISO 3166-1:2020 - Codes for the representation of names of countries and their subdivisions - Part 1: Country codes*. https://www.iso.org/iso-3166-country-codes.html
+
+Leonelli, S. (2016). *Data-Centric Biology: A Philosophical Study*. University of Chicago Press.
+
+Our World in Data. (n.d.). *Climate Change Data*. https://ourworldindata.org/climate-change
+
+Pasquetto, I. V., Randles, B. M., & Borgman, C. L. (2017). On the reuse of scientific data. *Data Science Journal*, 16, 8. https://doi.org/10.5334/dsj-2017-008
+
+Wilkinson, M. D., Dumontier, M., Aalbersberg, I. J., Appleton, G., Axton, M., Baak, A., Blomberg, N., Boiten, J. W., da Silva Santos, L. B., Bourne, P. E., Bouwman, J., Brookes, A. J., Clark, T., Crosas, M., Dillo, I., Dumon, O., Edmunds, S., Evelo, C. T., Finkers, R., ... Mons, B. (2016). The FAIR Guiding Principles for scientific data management and stewardship. *Scientific Data*, 3, 160018. https://doi.org/10.1038/sdata.2016.18
+
+---
+
+## Appendix: Artifacts Reference
+
+All artifacts referenced in this report are available in the GitHub repository: https://github.com/ceasarm7/cs598-e2e-datacuration
+
+**Key Artifacts:**
+- `artifacts/schema_definition.sql` - Database schema
+- `artifacts/initial_cleaning_script.py` - Python cleaning pipeline
+- `artifacts/openrefine_operations.json` - OpenRefine operations
+- `artifacts/data_dictionary.md` - Data dictionary/codebook
+- `artifacts/metadata_datacite.json` - DataCite metadata
+- `artifacts/provenance_workflow.md` - Complete workflow documentation
+- `artifacts/lifecycle_analysis.md` - Lifecycle model mapping
+- `artifacts/identifier_systems.md` - Identifier system analysis
+- `artifacts/data_concepts_practices.md` - BRM and data practices analysis
+- `quality_profile_report.txt` - Quality assessment report
+- `requirements.txt` - Python dependencies
+- `README.md` - Project overview
+
+**Cleaned Datasets:**
+- `artifacts/temperature_anomalies_initial_clean.csv` - Final cleaned dataset
+- `artifacts/temperature_anomalies_initial_dq_report.csv` - Quality metrics
+
+---
+
+**Word Count:** Approximately 2,400 words
+
